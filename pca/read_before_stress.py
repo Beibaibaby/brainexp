@@ -1,26 +1,14 @@
+
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy import array, dot, mean, std, empty, argsort
 from numpy.linalg import eigh
-
-myarray=[]
-with open('./201217_01/w1.csv') as f:
-    lines=f.readlines()
-    for line in lines:
-        myarray.append(line)
-
-myarray = np.asarray(myarray,dtype=np.float32)
-print(myarray)
-
-
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
-# Construct the columns for the different powers of x
 def get_r2_statsmodels(x, y, k=1):
     xpoly = np.column_stack([x**i for i in range(k+1)])
     return sm.OLS(y, xpoly).fit().rsquared
-
 
 
 def slided(data):
@@ -44,48 +32,50 @@ def smoothing(data,w):
             smoothed_data[i] = np.average(data[i:i + width])
     return smoothed_data
 
-ts = np.load('./ts_201217_01.npy')
+def dig(num):
+   return (float(int(num * 10000) / 10000))
 
+
+
+ts = np.load('/Users/dragon/Desktop/brainexp/pro_data/ts_201217_01.npy')
 ts = np.delete(ts, (0), axis=0)
 print('Shape of the TS')
 print(ts.shape)
-
 from sklearn.decomposition import PCA
-
-pca = PCA(n_components=5)
+pca = PCA(n_components=4)
 pca.fit(ts)
-
 print(pca.components_)
-
 print(pca.explained_variance_ratio_[0])
 
-np.save('./201217_01/pca', pca.components_)
 
-def dig(num):
-   return (float(int(num * 1000) / 1000))
+myarray=[]
+with open('/Users/dragon/Desktop/brainexp/behav/w1.csv') as f:
+    lines=f.readlines()
+    for line in lines:
+        myarray.append(line)
+
+myarray = np.asarray(myarray,dtype=np.float32)
 
 
-
-
-idx = 1
-
-
+idx=1
 pca = PCA(n_components=5)
 ts_transformed = pca.fit_transform(ts)
-print('transform shape')
-print(ts_transformed.shape)
-
+np.save('./series/beforestress/pca', pca.components_)
+#print('transform shape')
+#print(ts_transformed.shape)
+ccc=['blue','red','green','brown','purple']
 dt=1
 starttime = 0
 endtime = 8995
 steps = int(abs(starttime - endtime) / dt)
 time = np.linspace(starttime, endtime, steps)
 print(time.shape)
-
-
-
 r2=get_r2_statsmodels(ts_transformed.T[idx-1],myarray[:time.shape[0]])
 fig, ax = plt.subplots()
+a=[22,266,512,1561,2237,2959,3393,3580,3760,5133,5565]
+b=[117,355,602,1628,2389,3010,3475,3633,3827,5284,5692]
+for i in range(len(a)):
+ ax.axvspan(a[i], b[i], alpha=0.3, color='green')
 
 ccc=['blue','red','green','brown','purple']
 #plt.plot(time,smoothing(ts_transformed.T[0],50),'blue',label='pc1-'+str(pca.explained_variance_ratio_[0]),markersize=3)
@@ -107,6 +97,5 @@ fig.legend()
 plt.title('PC'+str(idx)+'-Before Stress R2='+str(float (int (r2 * 1000) / 1000)))
 plt.show()
 
-
-fig.savefig('./201217_01/pc'+str(idx)+'.png')
+plt.savefig('./series/beforestress/pc'+str(idx)+'.png')
 plt.show()

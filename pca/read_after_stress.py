@@ -2,6 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy import array, dot, mean, std, empty, argsort
 from numpy.linalg import eigh
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+
+def get_r2_statsmodels(x, y, k=1):
+    xpoly = np.column_stack([x**i for i in range(k+1)])
+    return sm.OLS(y, xpoly).fit().rsquared
+
 
 def slided(data):
     timestep = 5 * 10 ** -3
@@ -29,7 +36,7 @@ def dig(num):
 
 
 
-ts = np.load('./ts_201224_01.npy')
+ts = np.load('/Users/dragon/Desktop/brainexp/pro_data/ts_201224_01.npy')
 ts = np.delete(ts, (0), axis=0)
 print('Shape of the TS')
 print(ts.shape)
@@ -40,26 +47,21 @@ print(pca.components_)
 print(pca.explained_variance_ratio_[0])
 
 
+myarray=[]
+with open('/Users/dragon/Desktop/brainexp/behav/w2.csv') as f:
+    lines=f.readlines()
+    for line in lines:
+        myarray.append(line)
 
-fig = plt.figure()
-axes = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-axes.scatter(pca.components_[0],  pca.components_[1], c = 'r')
+myarray = np.asarray(myarray,dtype=np.float32)
 
-axes.set_xlabel('x1')
-axes.set_ylabel('x2')
-axes.set_xlim((-1, 1))
-axes.set_xticks(np.arange(-1, 1, step=0.2))
-axes.set_ylim((-1, 1))
-axes.set_yticks(np.arange(-1, 1, step=0.2))
-plt.show()
-fig.savefig('pca.png')
 
 idx=1
 pca = PCA(n_components=5)
 ts_transformed = pca.fit_transform(ts)
-np.save('./201224_01/pca', pca.components_)
-print('transform shape')
-print(ts_transformed.shape)
+np.save('./series/afterstress/pca', pca.components_)
+#print('transform shape')
+#print(ts_transformed.shape)
 ccc=['blue','red','green','brown','purple']
 dt=1
 starttime = 0
@@ -67,25 +69,32 @@ endtime = 8995
 steps = int(abs(starttime - endtime) / dt)
 time = np.linspace(starttime, endtime, steps)
 print(time.shape)
-
+r2=get_r2_statsmodels(ts_transformed.T[idx-1],myarray[:time.shape[0]])
 fig, ax = plt.subplots()
-a=[22,266,512,1561,2237,2959,3393,3580,3760,5133,5565]
-b=[117,355,602,1628,2389,3010,3475,3633,3827,5284,5692]
+a=[10,193,371,1261,1488,1722,2933,3097,3257,3364,3745,4034,4366,5279,5656,5781,6066,6349,6469,7111,7375,7711,7912,8026,8194,8379,8744]
+b=[51,207,442,1342,1542,1764,2965,3135,3281,3412,3867,4098,4458,5360,5757,5800,6081,6406,6507,7200,7401,7744,7959,8069,8252,8400,8843]
 for i in range(len(a)):
  ax.axvspan(a[i], b[i], alpha=0.3, color='green')
 
+ccc=['blue','red','green','brown','purple']
 #plt.plot(time,smoothing(ts_transformed.T[0],50),'blue',label='pc1-'+str(pca.explained_variance_ratio_[0]),markersize=3)
-plt.plot(time,smoothing(ts_transformed.T[idx-1],50),ccc[idx-1],label='ER-'+str(dig(pca.explained_variance_ratio_[idx-1]))+',std'+str(dig(np.std(ts_transformed.T[idx-1]))),markersize=3)
+ax.plot(time,smoothing(ts_transformed.T[idx-1],50),ccc[idx-1],label='ER'+str(float (int (pca.explained_variance_ratio_[idx-1] * 1000) / 1000))+' SD-'+str(dig(np.std(ts_transformed.T[idx-1]))),markersize=3)
+
 #plt.plot(time,smoothing(pca.components_[1],100),'red',label='pc2-'+str(pca.explained_variance_ratio_[1]),markersize=3)
 #plt.plot(time,smoothing(pca.components_[2],100),'green',label='pc3-'+str(pca.explained_variance_ratio_[2]),markersize=3)
 #plt.plot(time,smoothing(pca.components_[3]),'orange',label='pc2-'+str(pca.explained_variance_ratio_[3])',markersize=3)
 
 
-plt.title('After 7 days of stress: PC'+str(idx))
-plt.xlabel('times')
-plt.ylabel('pc')
-plt.legend()
+#plt.title('Before stress: PC (smoothing =50)')
+ax.set_xlabel('times',fontsize=14)
+ax.set_ylabel('pc',fontsize=14)
 
+ax2=ax.twinx()
+ax2.plot(time, smoothing(myarray[:time.shape[0]],50),color="black",label='whisking',alpha=0.5,markersize=3)
+ax2.set_ylabel("magnitude",fontsize=14)
+fig.legend()
+plt.title('PC'+str(idx)+'-After Stress R2='+str(float (int (r2 * 1000) / 1000)))
+plt.show()
 
-plt.savefig('./201224_01/pc'+str(idx)+'.png')
+plt.savefig('./series/afterstress/pc'+str(idx)+'.png')
 plt.show()
