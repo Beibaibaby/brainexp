@@ -70,7 +70,7 @@ wishking = wishking[:run.size]
 time = []
 
 for i in range(pc1.size):
-    time.append(i)
+    time.append(i%8995)
 
 status=[]
 
@@ -95,3 +95,5 @@ group = np.zeros((np.size(pc1)))
 model = sm.MixedLM(run.T, np.asarray([pc1,time,wishking,status]).T,group)
 result = model.fit()
 print(result.summary())
+data=np.asarray([run,pc1,time,wishking,status]).T
+np.savetxt("data.csv", data, delimiter=",")
