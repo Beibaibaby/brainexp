@@ -103,7 +103,7 @@ starttime = 0
 endtime = 4*8995
 steps = int(abs(starttime - endtime) / dt)
 time = np.linspace(starttime, endtime, steps)
-time = time/15
+#time = time/15
 print(time.shape)
 ccc = ['blue', 'red', 'green', 'brown', 'purple']
 a = np.asarray([22, 266, 512, 1561, 2237, 2959, 3393, 3580, 3760, 5133, 5565])
@@ -123,9 +123,41 @@ b3= 8995*3+np.asarray([230,1051,1076,1161,3593,5059,6338,6566,6784,7005,7378,746
 pos_ts_gradient=np.gradient(smoothing(pos_ts,100))
 pos_ts_gradient=pos_ts_gradient*15
 a=np.concatenate((a, a1,a2,a3), axis=0)
-a=a/15
+#a=a/15
 b=np.concatenate((b, b1,b2,b3), axis=0)
-b=b/15
+#b=b/15
+neg_ts_gradient=np.gradient(smoothing(neg_ts,100))
+neg_ts_gradient=neg_ts_gradient*15
+sum_der_pos = 0
+nor=0
+for i in range(len(a)):
+    for j in range(b[i]-a[i]):
+        sum_der_pos+=pos_ts_gradient[a[i]+j]
+        nor+=1
+avg_der_pos=15*sum_der_pos/nor
+sum_der_neg=0
+for i in range(len(a)):
+    for j in range(b[i]-a[i]):
+        sum_der_neg+=neg_ts_gradient[a[i]+j]
+avg_der_neg=15*sum_der_neg/nor
+print(avg_der_pos)
+print(avg_der_neg)
+
+
+fig, ax = plt.subplots()
+x = ['Pos_Run', 'Neg_Run', 'Pos_all', 'Neg_all']
+y = [avg_der_pos,avg_der_neg,15*np.average(pos_ts_gradient),15*np.average(neg_ts_gradient)]
+ax.bar(x,y,color=['b','r','b','r'])
+plt.savefig('der_compare')
+plt.show()
+
+
+
+print(15*np.average(pos_ts_gradient))
+print(15*np.average(neg_ts_gradient))
+np.save('pos_ts_gradient.npy',pos_ts_gradient)
+np.save('neg_ts_gradient.npy',neg_ts_gradient)
+
 for idx in [1]:
 
     fig, ax = plt.subplots()
@@ -142,8 +174,7 @@ for idx in [1]:
             label='pos', markersize=3)
     ax.plot(time, smoothing(neg_ts,100), ccc[idx],
             label='neg', markersize=3)
-    ax.plot(time, smoothing(pos_ts_gradient[:time.shape[0]], 1), color="brown", label='grad', alpha=0.5,
-             markersize=3)
+    #ax.plot(time, smoothing(pos_ts_gradient[:time.shape[0]], 1), color="brown", label='grad', alpha=0.5,         markersize=3)
     # plt.plot(time,smoothing(pca.components_[1],100),'red',label='pc2-'+str(pca.explained_variance_ratio_[1]),markersize=3)
     # plt.plot(time,smoothing(pca.components_[2],100),'green',label='pc3-'+str(pca.explained_variance_ratio_[2]),markersize=3)
     # plt.plot(time,smoothing(pca.components_[3]),'orange',label='pc2-'+str(pca.explained_variance_ratio_[3])',markersize=3)
@@ -153,13 +184,16 @@ for idx in [1]:
     ax.set_ylabel('activity', fontsize=14)
 
     ax2 = ax.twinx()
-    ax2.plot(time, smoothing(myarray[:time.shape[0]], 50), color="black", label='whisking', alpha=0.5, markersize=3)
-
+    ax2.plot(time, smoothing(pos_ts_gradient[:time.shape[0]], 10), color="black", label='grad', alpha=0.9,
+             markersize=3)
+    ax2.plot(time, np.zeros(time.shape), color="yellow", alpha=0.5,
+             markersize=3)
     ax2.set_ylabel("magnitude", fontsize=14)
+
     fig.legend()
     plt.title('Activity (Pick based on pc1)'+' pr2='+str(float(int(r2_p * 1000) / 1000)) +' nr2='+str(float(int(r2_n * 1000) / 1000)) )
 
-    plt.savefig('./series/overall/pn_seris_average' + str(idx) + '.png')
+    plt.savefig('./series/overall/pn_der_average' + str(idx) + '.png')
     plt.show()
 
 

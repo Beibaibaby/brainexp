@@ -78,22 +78,40 @@ for i in range(pc1.size):
     if i < int(pc1.size/4):
         status.append(1)
     elif i>=int(pc1.size/4) and i < int(pc1.size/2):
-        status.append(2)
-    elif i >= int(pc1.size / 2) and i < int(3*pc1.size / 4):
-        status.append(3)
-    else:
         status.append(4)
+    elif i >= int(pc1.size / 2) and i < int(3*pc1.size / 4):
+        status.append(2)
+    else:
+        status.append(3)
 
 status=np.asarray(status)
-
 time = np.asarray(time)
 
-base=np.asarray([run,pc1,wishking,time]).T
+print(time)
+
 
 group = np.zeros((np.size(pc1)))
+stand=True
+pos_ts_gradient=np.load('/Users/dragon/Desktop/brainexp/pca/pos_ts_gradient.npy')
+neg_ts_gradient=np.load('/Users/dragon/Desktop/brainexp/pca/neg_ts_gradient.npy')
+if stand == True:
+    status = np.interp(status, (status.min(), status.max()), (0, pc1.max()))
+    time = np.interp(time, (time.min(), time.max()), (0, pc1.max()))
+    # wishking = np.interp(wishking, (wishking.min(), wishking.max()), (0, +1))
+    # pc1 = np.interp(pc1, (pc1.min(), pc1.max()), (-1, +1))
+    run = np.interp(run, (run.min(), run.max()), (pc1.min(), pc1.max()))
+    # wishking = np.interp(wishking, (wishking.min(), wishking.max()),(pc1.min(), pc1.max()))
+    pos_ts_gradient=np.interp(pos_ts_gradient, (pos_ts_gradient.min(), pos_ts_gradient.max()), (pc1.min(), pc1.max()))
+    neg_ts_gradient = np.interp(neg_ts_gradient, (neg_ts_gradient.min(), neg_ts_gradient.max()), (pc1.min(), pc1.max()))
 
-model = sm.MixedLM(run.T, np.asarray([pc1,time,wishking,status]).T,group)
+model = sm.MixedLM(run.T, np.asarray([pc1,time,wishking,status,pos_ts_gradient,neg_ts_gradient]).T,group)
 result = model.fit()
 print(result.summary())
 data=np.asarray([run,pc1,time,wishking,status]).T
 np.savetxt("data.csv", data, delimiter=",")
+
+model = sm.MixedLM(wishking.T, np.asarray([pc1, time, run, status,pos_ts_gradient,neg_ts_gradient]).T, group)
+result = model.fit()
+print(result.summary())
+
+
