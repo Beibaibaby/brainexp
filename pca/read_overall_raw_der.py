@@ -129,25 +129,48 @@ b=np.concatenate((b, b1,b2,b3), axis=0)
 neg_ts_gradient=np.gradient(smoothing(neg_ts,100))
 neg_ts_gradient=neg_ts_gradient*15
 sum_der_pos = 0
+sum_der_pos_pre =0
+sum_der_pos_after=0
 nor=0
 for i in range(len(a)):
     for j in range(b[i]-a[i]):
+
         sum_der_pos+=pos_ts_gradient[a[i]+j]
+        if a[i]-j>=0:
+          sum_der_pos_pre +=pos_ts_gradient[a[i]-j]
+        sum_der_pos_after+=pos_ts_gradient[b[i]+j]
         nor+=1
+
 avg_der_pos=15*sum_der_pos/nor
+avg_der_pos_pre=15*sum_der_pos_pre/nor
+avg_der_pos_after=15*sum_der_pos_after/nor
+
 sum_der_neg=0
+sum_der_neg_pre =0
+sum_der_neg_after=0
+
 for i in range(len(a)):
     for j in range(b[i]-a[i]):
         sum_der_neg+=neg_ts_gradient[a[i]+j]
+        if a[i]-j>=0:
+          sum_der_neg_pre +=neg_ts_gradient[a[i]-j]
+        sum_der_neg_after+=neg_ts_gradient[b[i]+j]
+        nor+=1
+
 avg_der_neg=15*sum_der_neg/nor
+avg_der_neg_pre=15*sum_der_neg_pre/nor
+avg_der_neg_after=15*sum_der_neg_after/nor
 print(avg_der_pos)
+print('pre',avg_der_pos_pre)
+
 print(avg_der_neg)
 
 
 fig, ax = plt.subplots()
-x = ['Pos_Run', 'Neg_Run', 'Pos_all', 'Neg_all']
-y = [avg_der_pos,avg_der_neg,15*np.average(pos_ts_gradient),15*np.average(neg_ts_gradient)]
-ax.bar(x,y,color=['b','r','b','r'])
+fig.set_size_inches(15.5, 10.5)
+x = ['Pos_Pre_Run','Neg_Pre_Run','Pos_Run', 'Neg_Run','Pos_After_Run','Neg_After_Run', 'Pos_all', 'Neg_all']
+y = [avg_der_pos_pre,avg_der_neg_pre,avg_der_pos,avg_der_neg,avg_der_pos_after,avg_der_neg_after,15*np.average(pos_ts_gradient),15*np.average(neg_ts_gradient)]
+ax.bar(x,y,color=['b','r','b','r','b','r','b','r'])
 plt.savefig('der_compare')
 plt.show()
 
@@ -155,6 +178,7 @@ plt.show()
 
 print(15*np.average(pos_ts_gradient))
 print(15*np.average(neg_ts_gradient))
+
 np.save('pos_ts_gradient.npy',pos_ts_gradient)
 np.save('neg_ts_gradient.npy',neg_ts_gradient)
 

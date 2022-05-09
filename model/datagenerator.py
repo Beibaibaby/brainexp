@@ -97,21 +97,35 @@ neg_ts_gradient=np.load('/Users/dragon/Desktop/brainexp/pca/neg_ts_gradient.npy'
 if stand == True:
     status = np.interp(status, (status.min(), status.max()), (0, pc1.max()))
     time = np.interp(time, (time.min(), time.max()), (0, pc1.max()))
-    # wishking = np.interp(wishking, (wishking.min(), wishking.max()), (0, +1))
+    wishking = np.interp(wishking, (wishking.min(), wishking.max()), (0, pc1.max()))
     # pc1 = np.interp(pc1, (pc1.min(), pc1.max()), (-1, +1))
     run = np.interp(run, (run.min(), run.max()), (pc1.min(), pc1.max()))
     # wishking = np.interp(wishking, (wishking.min(), wishking.max()),(pc1.min(), pc1.max()))
     pos_ts_gradient=np.interp(pos_ts_gradient, (pos_ts_gradient.min(), pos_ts_gradient.max()), (pc1.min(), pc1.max()))
     neg_ts_gradient = np.interp(neg_ts_gradient, (neg_ts_gradient.min(), neg_ts_gradient.max()), (pc1.min(), pc1.max()))
+    inter_pos= status*pos_ts_gradient
+    inter_neg=status*neg_ts_gradient
+    inter_pos=np.interp( inter_pos, ( inter_pos.min(),  inter_pos.max()), (pc1.min(), pc1.max()))
+    inter_neg = np.interp(inter_neg, (inter_neg.min(), inter_neg.max()), (pc1.min(), pc1.max()))
 
-model = sm.MixedLM(run.T, np.asarray([pc1,time,wishking,status,pos_ts_gradient,neg_ts_gradient]).T,group)
+model = sm.MixedLM(run.T, np.asarray([pc1,time,wishking,status,pos_ts_gradient,neg_ts_gradient, inter_pos,inter_neg]).T,group)
 result = model.fit()
 print(result.summary())
 data=np.asarray([run,pc1,time,wishking,status]).T
 np.savetxt("data.csv", data, delimiter=",")
 
-model = sm.MixedLM(wishking.T, np.asarray([pc1, time, run, status,pos_ts_gradient,neg_ts_gradient]).T, group)
+#model = sm.MixedLM(wishking.T, np.asarray([pc1, time, run, status,pos_ts_gradient,neg_ts_gradient]).T, group)
+#result = model.fit()
+#print(result.summary())
+print(status.shape)
+
+model = sm.MixedLM(status.T, np.asarray([run,pc1,time,wishking,pos_ts_gradient,neg_ts_gradient, inter_pos,inter_neg]).T,group)
 result = model.fit()
 print(result.summary())
 
 
+status=sm.tools.categorical(np.asarray([1,2,3,4]), drop=True)
+print(status)
+model = sm.MixedLM(run.T, np.asarray([pc1,time,wishking,status,pos_ts_gradient,neg_ts_gradient, inter_pos,inter_neg]).T,group)
+result = model.fit()
+print(result.summary())
