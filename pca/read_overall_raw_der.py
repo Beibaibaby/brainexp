@@ -93,10 +93,7 @@ with open('/Users/dragon/Desktop/brainexp/behav/w4.csv') as f:
 
 myarray = np.asarray(myarray,dtype=np.float32)
 
-pca = PCA(n_components=5)
-ts_transformed = pca.fit_transform(ts)
-np.save('./series/overall/pca', pca.components_)
-np.save('./series/overall/ts_transformed', ts_transformed)
+
 ccc = ['blue', 'red', 'green', 'brown', 'purple']
 dt = 1
 starttime = 0

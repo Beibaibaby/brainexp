@@ -56,6 +56,7 @@ with open('/Users/dragon/Desktop/brainexp/behav/w1.csv') as f:
 
 myarray = np.asarray(myarray,dtype=np.float32)
 pca = PCA(n_components=5)
+print(ts.shape)
 ts_transformed = pca.fit_transform(ts)
 np.save('./series/beforestress/pca', pca.components_)
 
