@@ -129,32 +129,35 @@ if stand == True:
 #result = model.fit()
 #print(result.summary())
 #print(status.shape)
-
+print('run,pc1,time,wishking')
 model = sm.MixedLM(status.T, np.asarray([run,pc1,time,wishking]).T,group)
 result = model.fit()
 print(result.summary())
 
+print('run,pos_ts,neg_ts,time,wishking')
 model = sm.MixedLM(status.T, np.asarray([run,pos_ts,neg_ts,time,wishking]).T,group)
 result = model.fit()
 print(result.summary())
 
-
+print('run,pos_ts_gradient,neg_ts_gradient,time,wishking')
 model = sm.MixedLM(status.T, np.asarray([run,pos_ts_gradient,neg_ts_gradient,time,wishking]).T,group)
 result = model.fit()
 print(result.summary())
 
 
 
-
+print('pc1,time,wishking')
 model = sm.MixedLM(status.T, np.asarray([pc1,time,wishking]).T,group)
 result = model.fit()
 print(result.summary())
 
+
+print('pos_ts,neg_ts,time,wishking')
 model = sm.MixedLM(status.T, np.asarray([pos_ts,neg_ts,time,wishking]).T,group)
 result = model.fit()
 print(result.summary())
 
-
+print('pos_ts_gradient,neg_ts_gradient,time,wishking')
 model = sm.MixedLM(status.T, np.asarray([pos_ts_gradient,neg_ts_gradient,time,wishking]).T,group)
 result = model.fit()
 print(result.summary())
