@@ -134,10 +134,15 @@ with open('/Users/dragon/Desktop/brainexp/behav/w4.csv') as f:
 wishking = np.asarray(myarray,dtype=np.float32)
 
 
-
 from sklearn.linear_model import Lasso
 print('start')
-reg = Lasso(alpha=1)
+reg = Lasso(alpha=0.0001)
+wishking = wishking[:35989]
+print(ts.shape)
+print(wishking.shape)
+
+
 reg.fit(ts, wishking)
 print('R squared training set', round(reg.score(ts, wishking)*100, 2))
 print('R squared test set', round(reg.score(ts, wishking)*100, 2))
+np.save('reg.coef_',reg.coef_)
