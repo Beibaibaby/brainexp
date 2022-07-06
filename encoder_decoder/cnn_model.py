@@ -1,4 +1,3 @@
-from __future__ import print_function
 
 import numpy as np
 import h5py
@@ -13,7 +12,13 @@ from numpy import array, dot, mean, std, empty, argsort
 from numpy.linalg import eigh
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
-
+from tensorflow.keras.preprocessing import sequence
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Embedding
+from tensorflow.keras.layers import LSTM
+from tensorflow.keras.datasets import imdb
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+import tensorflow as tf
 def get_r2_statsmodels(x, y, k=1):
     xpoly = np.column_stack([x**i for i in range(k+1)])
     return sm.OLS(y, xpoly).fit().rsquared
@@ -89,11 +94,11 @@ for i in range(lenth):
     if i < int(lenth/4):
         status.append(0)
     elif i>=int(lenth/4) and i < int(lenth/2):
-        status.append(6)
-    elif i >= int(lenth / 2) and i < int(3*lenth / 4):
         status.append(3)
-    else:
+    elif i >= int(lenth / 2) and i < int(3*lenth / 4):
         status.append(2)
+    else:
+        status.append(1)
 
 status=np.asarray(status)
 
@@ -148,7 +153,7 @@ for i in range(len(a3)):
 
 
 
-mask_ss = np.load('./mask_ss.npy')
+mask_ss = np.load('/Users/dragon/Desktop/brainexp/pca/mask_ss.npy')
 akk = mask_ss[:480,:]*200
 mcopy = np.full_like(akk, 0)
 def searchregion_1(matrix,ini_i,ini_j,value):
@@ -275,11 +280,6 @@ def searchregion_1(matrix,ini_i,ini_j,value):
                     break
 
     return matrix
-
-
-
-
-
 
 
 abss = reg1.coef_
@@ -424,12 +424,7 @@ y_train=np.asarray(y_train)
 #label=np.asarray([status[:1000],status[1000:2000],status[2000:3000],status[9000:10000],status[10000:11000],status[11000:12000]])
 #label=np.asarray([1,1,1,6,6,6])
 #y_train=label
-from tensorflow.keras.preprocessing import sequence
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Embedding
-from tensorflow.keras.layers import LSTM
-from tensorflow.keras.datasets import imdb
-from tensorflow.keras.preprocessing.sequence import pad_sequences
+
 
 max_features = 20000
 maxlen = 80
@@ -448,6 +443,7 @@ print('Loading data...')
 #y_train=status
 x_test=x_train
 y_test=y_train
+
 print('Pad sequences (samples x time)')
 #x_train = pad_sequences(x_train, maxlen=maxlen)
 #x_test = pad_sequences(x_test, maxlen=maxlen)
@@ -457,20 +453,24 @@ print('x_test shape:', x_test.shape)
 print('Build model...')
 model = Sequential()
 #model.add(Embedding(max_features, 9))
-model.add(LSTM(9, input_shape=(3000,9),dropout=0.2, recurrent_dropout=0.2))
+model.add(tf.keras.layers.Flatten(input_shape=(3000, 6)))
+model.add(tf.keras.layers.Dense(128, activation='relu'))
+model.add(tf.keras.layers.Dense(4))
+
+#model.add(LSTM(9, input_shape=(3000,9),dropout=0.2, recurrent_dropout=0.2))
 #model.add(LSTM(9, input_shape=(1000,9),dropout=0.2, recurrent_dropout=0.2))
-model.add(Dense(1, activation='sigmoid'))
+
 
 # try using different optimizers and different optimizer configs
-model.compile(loss='categorical_crossentropy',
-              optimizer='adam',
+model.compile(optimizer='adam',
+              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
               metrics=['accuracy'])
 
 print('Train...')
+print(y_train)
 model.fit(x_train, y_train,
           batch_size=batch_size,
-          epochs=20,
-          validation_data=(x_test, y_test))
+          epochs=2)
 score, acc = model.evaluate(x_test, y_test,
                             batch_size=batch_size)
 print('Test score:', score)
