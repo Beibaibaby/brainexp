@@ -8,7 +8,7 @@ import bioread
 shapeletA = [-1.5116833, -0.5682773, 1.46413934, -0.7661631, 0.6143466, 0.12867262, 1.04853951, -0.4095744]
 shapeletB = [-2.0847277, -0.2029212, 1.22671969, -0.3026837, 0.37005532, 0.72853974, 0.5283917, -0.2633737]
 
-fs = 2000  # sampling rate of Biosignalplux
+fs = 1000  # sampling rate of Biosignalplux
 lowFreq = .1
 highFreq = 100
 
@@ -18,7 +18,8 @@ shapelet_size = len(shapeletA)
 
 def getFilterData(rawData):
     data = np.asarray(rawData)
-    data_mV = ((((data / np.power(2, 16)) - 0.5) * 3) / 1019) * 1000  # ecg manual pdf page 5
+    data = np.interp(data, (data.min(), data.max()), (0, +1))
+    data = ((((data / np.power(2, 16)) - 0.5) * 3) / 1019) * 2000  # ecg manual pdf page 5
     data_t = hp.filter_signal(data, [lowFreq, highFreq], fs, order=4, filtertype='bandpass', return_top=False)
 
     return data_t
@@ -49,13 +50,17 @@ def compareShapelets(hf_Data):
 
 
 data0 = bioread.read_file('/Users/dragon/Desktop/fMRI_ECG/s161.acq')
-print(data0.channels)
-print(data0)
-print(len(data0.channels))
+
+
+
+
 data1=data0.channels[0].data
+data1=np.asarray(data1)
+
+data1 = np.interp(data1, (data1.min(), data1.max()), (0, +1))
+
 import matplotlib.pylab as plt
 
-print(len(data1))
 plt.show()
 
 data_cleaned=getFilterData(data1)

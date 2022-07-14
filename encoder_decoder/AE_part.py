@@ -359,12 +359,9 @@ print(run.shape)
 
 wishking=np.expand_dims(wishking,axis=1)
 status=np.asarray(status)
-wishking = np.interp(wishking, (wishking.min(), wishking.max()), (0, +1))
-run = np.interp(run, (run.min(), run.max()), (0, +1))
-ts = np.interp(ts, (ts.min(), ts.max()), (0, +1))
-
-features=np.append(ts, run,axis=1)
-features=np.append(features, wishking,axis=1)
+features=np.asarray(ts)
+#features=np.append(ts, run,axis=1)
+#features=np.append(features, wishking,axis=1)
 print('size of featuare',features.shape)
 lin = LinearRegression().fit(features, status)
 print(lin.score(features, status))
@@ -404,14 +401,6 @@ class MyDataset(Dataset):
 #dataset = MyDataset(data, targets, transform=transform)
 #dataloader = DataLoader(dataset, batch_size=5)
 
-sample1=features[:1000,:]
-sample2=features[1000:2000,:]
-sample3=features[2000:3000,:]
-
-
-sample4=features[9000:10000,:]
-sample5=features[10000:11000,:]
-sample6=features[11000:12000,:]
 
 
 
@@ -455,19 +444,27 @@ print('Loading data...')
 #y_train=status
 x_test=x_train
 y_test=y_train
+x_train=x_train.reshape(1000,x_train[0].size)
+
+x_train = np.interp(x_train, (x_train.min(), x_train.max()), (0, +1))
 
 print('Pad sequences (samples x time)')
 #x_train = pad_sequences(x_train, maxlen=maxlen)
 #x_test = pad_sequences(x_test, maxlen=maxlen)
 print('x_train shape:', x_train.shape)
 print('x_test shape:', x_test.shape)
+print('max'+str(np.amax(x_train)))
+print('x_train_mean:'+str(np.mean(x_train)))
+print('x_train_sd:'+str(np.std(x_train)))
+
+_ = plt.hist(x_train.flatten(), bins='auto')
+plt.title("Histogram of Training")
+plt.show()
+
 from sklearn.utils import shuffle
 
 x_train, y_train = shuffle(x_train, y_train, random_state=0)
 x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(x_train, y_train, test_size=0.1)
-
-
-
 
 
 #############################################
@@ -477,10 +474,9 @@ x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(x_tr
 print('Build model...')
 model = Sequential()
 #model.add(Embedding(max_features, 9))
-model.add(tf.keras.layers.Flatten(input_shape=(len, 25)))
-
-#model.add(tf.keras.layers.Dense(512, activation='relu',name='encoder1'))
-#model.add(tf.keras.layers.Dense(256, activation='relu'))
+model.add(tf.keras.layers.Flatten(input_shape=(x_train[0].size,)))
+model.add(tf.keras.layers.Dense(512, activation='relu',name='encoder1'))
+model.add(tf.keras.layers.Dense(256, activation='relu'))
 #model.add(tf.keras.layers.Conv1D(filters=num_smaples, kernel_size=3, activation='relu', input_shape=(len, 6)))
 model.add(tf.keras.layers.Dense(128, activation='relu'))
 #model.add(tf.keras.layers.Dense(128, activation='relu'))
@@ -489,12 +485,14 @@ model.add(tf.keras.layers.Dense(128, activation='relu'))
 model.add(tf.keras.layers.Dense(64, activation='relu'))
 model.add(tf.keras.layers.Dense(32, activation='relu'))
 #model.add(tf.keras.layers.Dropout(0.2))
-model.add(tf.keras.layers.Dense(16, activation='relu'))
+model.add(tf.keras.layers.Dense(16, activation='relu',name='latent'))
+model.add(tf.keras.layers.Dense(32, activation='relu'))
 #model.add(tf.keras.layers.Dense(32, activation='relu'))
-#model.add(tf.keras.layers.Dense(32, activation='relu'))
-#model.add(tf.keras.layers.Dense(64, activation='relu'))
-#model.add(tf.keras.layers.Dense(128, activation='relu'))
-model.add(tf.keras.layers.Dense(1))
+model.add(tf.keras.layers.Dense(64, activation='relu'))
+model.add(tf.keras.layers.Dense(128, activation='relu'))
+model.add(tf.keras.layers.Dense(256, activation='relu'))
+model.add(tf.keras.layers.Dense(512, activation='relu'))
+model.add(tf.keras.layers.Dense(x_train[0].size,activation='sigmoid'))
 
 #model.add(LSTM(9, input_shape=(3000,9),dropout=0.2, recurrent_dropout=0.2))
 #model.add(LSTM(9, input_shape=(1000,9),dropout=0.2, recurrent_dropout=0.2))
@@ -506,14 +504,18 @@ model.compile(optimizer='adam',
               metrics=['mse'])
 
 print('Train...')
-print(y_train)
-model.fit(x_train, y_train,
+#print(y_train)
+model.fit(x_train, x_train,
           batch_size=batch_size,
-          epochs=250)
-score, acc = model.evaluate(x_test, y_test,
+          epochs=40)
+score, acc = model.evaluate(x_test, x_test,
                             batch_size=batch_size)
 print('MSE:', score)
 print('Test accuracy:', acc)
+
+
+
+
 
 
 
@@ -523,16 +525,45 @@ from sklearn import datasets, linear_model
 from sklearn.metrics import mean_squared_error, r2_score
 regr = linear_model.LinearRegression()
 print(x_train.shape)
-x_train=x_train.reshape(900,35*25)
-x_test=x_test.reshape(100,35*25)
+
 # Train the model using the training sets
 regr.fit(x_train, y_train)
-print(y_test)
 # Make predictions using the testing set
 y_pred = regr.predict(x_test)
-print("Coefficients: \n", regr.coef_)
+#print("Coefficients: \n", regr.coef_)
 # The mean squared error
 print("Mean squared error: %.2f" % mean_squared_error(y_test, y_pred))
 # The coefficient of determination: 1 is perfect prediction
 print("Coefficient of determination: %.2f" % r2_score(y_test, y_pred))
+
+
+from keras.models import Model
+intermediate_layer_model = Model(inputs=model.input,
+                                 outputs=model.get_layer('latent').output)
+intermediate_output_test = intermediate_layer_model.predict(x_test)
+intermediate_output_train = intermediate_layer_model.predict(x_train)
+regr = linear_model.LinearRegression()
+print(x_train.shape)
+
+# Train the model using the training sets
+regr.fit(intermediate_output_train, y_train)
+#print(y_test)
+# Make predictions using the testing set
+y_pred = regr.predict(intermediate_output_test)
+latents=np.concatenate((intermediate_output_test,intermediate_output_train), axis=None)
+_ = plt.hist(latents.flatten(), bins='auto')
+plt.title("Histogram of latent")
+plt.show()
+print('latent_mean')
+print(np.mean(latents))
+print('latent_std')
+print(np.std(latents))
+
+
+#print("Coefficients: \n", regr.coef_)
+# The mean squared error
+print("Mean squared error--：Latent: %.2f" % mean_squared_error(y_test, y_pred))
+# The coefficient of determination: 1 is perfect prediction
+print("Coefficient of determination: %.2f" % r2_score(y_test, y_pred))
+
 
