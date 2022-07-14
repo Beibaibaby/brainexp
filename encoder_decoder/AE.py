@@ -86,7 +86,7 @@ wishking = np.asarray(myarray,dtype=np.float32)
 
 from sklearn.linear_model import Lasso
 print('start')
-reg1 = Lasso(alpha=0.000004)
+reg1 = Lasso(alpha=0.000000004)
 status=[]
 lenth=ts.shape[0]
 print(ts.shape)
@@ -416,6 +416,7 @@ y_train=[]
 num_smaples=1000
 len=int(len(status)/num_smaples)
 print(len)
+
 for i in range(num_smaples):
 
     x_train.append(features[len*i:len*(i+1)])
@@ -423,7 +424,8 @@ for i in range(num_smaples):
 
 x_train=np.asarray(x_train)
 y_train=np.asarray(y_train)
-
+y_train=(y_train - np.min(y_train))/np.ptp(y_train)
+#y_test=(y_test - np.min(y_test))/np.ptp(y_test)
 #x_train=np.asarray([sample1,sample2,sample3,sample4,sample5,sample6])
 
 
@@ -449,6 +451,9 @@ print('Loading data...')
 #y_train=status
 x_test=x_train
 y_test=y_train
+x_train=x_train.reshape(1000,35*25)
+
+x_train = np.interp(x_train, (x_train.min(), x_train.max()), (0, +1))
 
 print('Pad sequences (samples x time)')
 #x_train = pad_sequences(x_train, maxlen=maxlen)
@@ -460,18 +465,33 @@ from sklearn.utils import shuffle
 x_train, y_train = shuffle(x_train, y_train, random_state=0)
 x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(x_train, y_train, test_size=0.1)
 
+
+#############################################
+
+
+
 print('Build model...')
 model = Sequential()
 #model.add(Embedding(max_features, 9))
-model.add(tf.keras.layers.Flatten(input_shape=(len, 6)))
+model.add(tf.keras.layers.Flatten(input_shape=(35*25,)))
+model.add(tf.keras.layers.Dense(512, activation='relu',name='encoder1'))
+model.add(tf.keras.layers.Dense(256, activation='relu'))
 #model.add(tf.keras.layers.Conv1D(filters=num_smaples, kernel_size=3, activation='relu', input_shape=(len, 6)))
 model.add(tf.keras.layers.Dense(128, activation='relu'))
+#model.add(tf.keras.layers.Dense(128, activation='relu'))
+#model.add(tf.keras.layers.Dropout(0.2))
+#model.add(tf.keras.layers.Dense(64, activation='relu'))
 model.add(tf.keras.layers.Dense(64, activation='relu'))
 model.add(tf.keras.layers.Dense(32, activation='relu'))
-model.add(tf.keras.layers.Dense(16, activation='relu'))
+#model.add(tf.keras.layers.Dropout(0.2))
+model.add(tf.keras.layers.Dense(16, activation='relu',name='latent'))
+model.add(tf.keras.layers.Dense(32, activation='relu'))
+#model.add(tf.keras.layers.Dense(32, activation='relu'))
 model.add(tf.keras.layers.Dense(64, activation='relu'))
 model.add(tf.keras.layers.Dense(128, activation='relu'))
-model.add(tf.keras.layers.Dense(4))
+model.add(tf.keras.layers.Dense(256, activation='relu'))
+model.add(tf.keras.layers.Dense(512, activation='relu'))
+model.add(tf.keras.layers.Dense(35*25,activation='sigmoid'))
 
 #model.add(LSTM(9, input_shape=(3000,9),dropout=0.2, recurrent_dropout=0.2))
 #model.add(LSTM(9, input_shape=(1000,9),dropout=0.2, recurrent_dropout=0.2))
@@ -479,15 +499,59 @@ model.add(tf.keras.layers.Dense(4))
 
 # try using different optimizers and different optimizer configs
 model.compile(optimizer='adam',
-              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-              metrics=['accuracy'])
+              loss=tf.keras.losses.MeanSquaredError(),
+              metrics=['mse'])
 
 print('Train...')
 print(y_train)
-model.fit(x_train, y_train,
+model.fit(x_train, x_train,
           batch_size=batch_size,
-          epochs=250)
-score, acc = model.evaluate(x_test, y_test,
+          epochs=30)
+score, acc = model.evaluate(x_test, x_test,
                             batch_size=batch_size)
-print('Test score:', score)
+print('MSE:', score)
 print('Test accuracy:', acc)
+
+
+
+
+
+
+
+###Linear Model for camparasion
+import matplotlib.pyplot as plt
+from sklearn import datasets, linear_model
+from sklearn.metrics import mean_squared_error, r2_score
+regr = linear_model.LinearRegression()
+print(x_train.shape)
+
+# Train the model using the training sets
+regr.fit(x_train, y_train)
+print(y_test)
+# Make predictions using the testing set
+y_pred = regr.predict(x_test)
+#print("Coefficients: \n", regr.coef_)
+# The mean squared error
+print("Mean squared error: %.2f" % mean_squared_error(y_test, y_pred))
+# The coefficient of determination: 1 is perfect prediction
+print("Coefficient of determination: %.2f" % r2_score(y_test, y_pred))
+
+
+from keras.models import Model
+intermediate_layer_model = Model(inputs=model.input,
+                                 outputs=model.get_layer('latent').output)
+intermediate_output_test = intermediate_layer_model.predict(x_test)
+intermediate_output_train = intermediate_layer_model.predict(x_train)
+regr = linear_model.LinearRegression()
+print(x_train.shape)
+
+# Train the model using the training sets
+regr.fit(intermediate_output_train, y_train)
+#print(y_test)
+# Make predictions using the testing set
+y_pred = regr.predict(intermediate_output_test)
+#print("Coefficients: \n", regr.coef_)
+# The mean squared error
+print("Mean squared error--：Latent: %.2f" % mean_squared_error(y_test, y_pred))
+# The coefficient of determination: 1 is perfect prediction
+print("Coefficient of determination: %.2f" % r2_score(y_test, y_pred))

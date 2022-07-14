@@ -86,7 +86,7 @@ wishking = np.asarray(myarray,dtype=np.float32)
 
 from sklearn.linear_model import Lasso
 print('start')
-reg1 = Lasso(alpha=0.000004)
+reg1 = Lasso(alpha=0.000000004)
 status=[]
 lenth=ts.shape[0]
 print(ts.shape)
@@ -365,6 +365,9 @@ print('size of featuare',features.shape)
 lin = LinearRegression().fit(features, status)
 print(lin.score(features, status))
 
+features=ts
+y_p=np.append(run, wishking,axis=1)
+
 import torch
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
@@ -419,7 +422,7 @@ print(len)
 for i in range(num_smaples):
 
     x_train.append(features[len*i:len*(i+1)])
-    y_train.append(status[len*i])
+    y_train.append(y_p[len*i])
 
 x_train=np.asarray(x_train)
 y_train=np.asarray(y_train)
@@ -463,31 +466,54 @@ x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(x_tr
 print('Build model...')
 model = Sequential()
 #model.add(Embedding(max_features, 9))
-model.add(tf.keras.layers.Flatten(input_shape=(len, 6)))
+model.add(tf.keras.layers.Flatten(input_shape=(len, 23)))
 #model.add(tf.keras.layers.Conv1D(filters=num_smaples, kernel_size=3, activation='relu', input_shape=(len, 6)))
+model.add(tf.keras.layers.Dense(256, activation='relu'))
+model.add(tf.keras.layers.Dense(128, activation='relu'))
+model.add(tf.keras.layers.Dropout(0.2))
 model.add(tf.keras.layers.Dense(128, activation='relu'))
 model.add(tf.keras.layers.Dense(64, activation='relu'))
+model.add(tf.keras.layers.Dropout(0.2))
+model.add(tf.keras.layers.Dense(64, activation='relu'))
+#model.add(tf.keras.layers.Dropout(0.2))
+model.add(tf.keras.layers.Dense(32, activation='relu'))
 model.add(tf.keras.layers.Dense(32, activation='relu'))
 model.add(tf.keras.layers.Dense(16, activation='relu'))
+#model.add(tf.keras.layers.Dense(32, activation='relu'))
 model.add(tf.keras.layers.Dense(64, activation='relu'))
 model.add(tf.keras.layers.Dense(128, activation='relu'))
-model.add(tf.keras.layers.Dense(4))
+model.add(tf.keras.layers.Dense(2))
+
+
+bce = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+mse = tf.keras.losses.MeanSquaredError()
+def custom_loss(y_true, y_pred):
+    bne=bce(y_true[0], y_pred[0])
+    mne=mse(y_true[1], y_pred[1])
+    loss=mne+bne
+    return loss
 
 #model.add(LSTM(9, input_shape=(3000,9),dropout=0.2, recurrent_dropout=0.2))
 #model.add(LSTM(9, input_shape=(1000,9),dropout=0.2, recurrent_dropout=0.2))
 
+import keras.backend as K
+
+def bcem(y_true, y_pred):
+    return mse(y_true[0], y_pred[0])
+
+def msem(y_true, y_pred):
+    return mse(y_true[1], y_pred[1])
+
 
 # try using different optimizers and different optimizer configs
-model.compile(optimizer='adam',
-              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-              metrics=['accuracy'])
-
+#model.compile(optimizer='adam',loss=custom_loss,metrics=[bcem,msem])
+model.compile(optimizer='adam',loss=tf.keras.losses.MeanSquaredError(),metrics=[bcem,msem])
 print('Train...')
 print(y_train)
 model.fit(x_train, y_train,
           batch_size=batch_size,
-          epochs=250)
-score, acc = model.evaluate(x_test, y_test,
-                            batch_size=batch_size)
-print('Test score:', score)
-print('Test accuracy:', acc)
+          epochs=500)
+
+score = model.evaluate(x_test, y_test,
+                            batch_size=batch_size,return_dict=True)
+print('Loss:', score)

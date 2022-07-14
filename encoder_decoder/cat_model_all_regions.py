@@ -86,7 +86,7 @@ wishking = np.asarray(myarray,dtype=np.float32)
 
 from sklearn.linear_model import Lasso
 print('start')
-reg1 = Lasso(alpha=0.000004)
+reg1 = Lasso(alpha=0.000000004)
 status=[]
 lenth=ts.shape[0]
 print(ts.shape)
@@ -463,12 +463,13 @@ x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(x_tr
 print('Build model...')
 model = Sequential()
 #model.add(Embedding(max_features, 9))
-model.add(tf.keras.layers.Flatten(input_shape=(len, 6)))
+model.add(tf.keras.layers.Flatten(input_shape=(len, 25)))
 #model.add(tf.keras.layers.Conv1D(filters=num_smaples, kernel_size=3, activation='relu', input_shape=(len, 6)))
 model.add(tf.keras.layers.Dense(128, activation='relu'))
 model.add(tf.keras.layers.Dense(64, activation='relu'))
 model.add(tf.keras.layers.Dense(32, activation='relu'))
 model.add(tf.keras.layers.Dense(16, activation='relu'))
+#model.add(tf.keras.layers.Dense(32, activation='relu'))
 model.add(tf.keras.layers.Dense(64, activation='relu'))
 model.add(tf.keras.layers.Dense(128, activation='relu'))
 model.add(tf.keras.layers.Dense(4))
@@ -489,5 +490,5 @@ model.fit(x_train, y_train,
           epochs=250)
 score, acc = model.evaluate(x_test, y_test,
                             batch_size=batch_size)
-print('Test score:', score)
+print('MSE:', score)
 print('Test accuracy:', acc)
