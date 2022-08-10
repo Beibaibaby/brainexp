@@ -1,0 +1,1 @@
+{"duration": 7.481488943099976, "input_args": {"epi_imgs": "['/Users/dragon/Downloads/BREATHE/fmri/s106/ouput.feat/filtered_func_data.nii.gz']", "lower_cutoff": "0.2", "upper_cutoff": "0.85", "connected": "True", "opening": "2", "threshold": "0.5", "target_affine": "None", "target_shape": "None", "exclude_zeros": "False"}}

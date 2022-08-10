@@ -8,7 +8,7 @@ import bioread
 shapeletA = [-1.5116833, -0.5682773, 1.46413934, -0.7661631, 0.6143466, 0.12867262, 1.04853951, -0.4095744]
 shapeletB = [-2.0847277, -0.2029212, 1.22671969, -0.3026837, 0.37005532, 0.72853974, 0.5283917, -0.2633737]
 
-fs = 1000  # sampling rate of Biosignalplux
+fs = 2000  # sampling rate of Biosignalplux
 lowFreq = .1
 highFreq = 100
 
@@ -18,11 +18,11 @@ shapelet_size = len(shapeletA)
 
 def getFilterData(rawData):
     data = np.asarray(rawData)
-    data = np.interp(data, (data.min(), data.max()), (0, +1))
-    data = ((((data / np.power(2, 16)) - 0.5) * 3) / 1019) * 2000  # ecg manual pdf page 5
-    data_t = hp.filter_signal(data, [lowFreq, highFreq], fs, order=4, filtertype='bandpass', return_top=False)
+    data = np.interp(data, (data.min(), data.max()), (0, +1024))
+    #data = ((((data / np.power(2, 16)) - 0.5) * 3) / 1019) * 2000  # ecg manual pdf page 5
+    #data = hp.filter_signal(data, [lowFreq, highFreq], fs, order=4, filtertype='bandpass', return_top=False)
 
-    return data_t
+    return data
 
 
 def getHF(rawData):
@@ -49,28 +49,59 @@ def compareShapelets(hf_Data):
     return shapA_results, shapB_results
 
 
-data0 = bioread.read_file('/Users/dragon/Desktop/fMRI_ECG/s161.acq')
+data0 = bioread.read_file('/Users/dragon/Downloads/BREATHE/ecg/BREATHE_s118_T1.acq')
+
+
+import matplotlib.pylab as plt
+rawdata=data0.channels[0].data
+fs = 2000.0
+working_data, measures = hp.process(rawdata, fs, report_time=True)
+
+print(measures['bpm']) #returns BPM value
+print(measures['rmssd']) # returns RMSSD HRV measure
+print(measures)
 
 
 
 
 data1=data0.channels[0].data
+print(data0)
 data1=np.asarray(data1)
+print('data1')
+print(data1)
 
-data1 = np.interp(data1, (data1.min(), data1.max()), (0, +1))
+working_data, measures = hp.process(data1, 2000.0)
+hp.plotter(working_data, measures)
 
-import matplotlib.pylab as plt
+#data1 = np.interp(data1, (data1.min(), data1.max()), (0, +1))
+
+
 
 plt.show()
 
 data_cleaned=getFilterData(data1)
 #plt.plot(data_cleaned)
 #plt.show()
-
+plt.plot(data1)
+plt.show()
 
 print(data_cleaned)
 HF_feature=getHF(data_cleaned)
 print(HF_feature)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 import pydicom as dicom

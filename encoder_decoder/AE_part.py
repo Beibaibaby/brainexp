@@ -358,10 +358,17 @@ print(run.shape)
 
 
 wishking=np.expand_dims(wishking,axis=1)
+wishking = np.interp(wishking, (wishking.min(), wishking.max()), (0, +1))
+print(np.mean(wishking))
+print(np.std(wishking))
+_ = plt.hist(wishking.flatten(), bins='auto')
+plt.title("Histogram of wishking")
+plt.show()
 status=np.asarray(status)
 features=np.asarray(ts)
+
 #features=np.append(ts, run,axis=1)
-#features=np.append(features, wishking,axis=1)
+view2_s=np.append(run, wishking,axis=1)
 print('size of featuare',features.shape)
 lin = LinearRegression().fit(features, status)
 print(lin.score(features, status))
@@ -406,6 +413,7 @@ class MyDataset(Dataset):
 
 x_train=[]
 y_train=[]
+view_2=[]
 num_smaples=1000
 len=int(len(status)/num_smaples)
 print(len)
@@ -414,6 +422,7 @@ for i in range(num_smaples):
 
     x_train.append(features[len*i:len*(i+1)])
     y_train.append(status[len*i])
+    view_2.append(view2_s[len*i:len*(i+1)])
 
 x_train=np.asarray(x_train)
 y_train=np.asarray(y_train)
@@ -457,6 +466,10 @@ print('max'+str(np.amax(x_train)))
 print('x_train_mean:'+str(np.mean(x_train)))
 print('x_train_sd:'+str(np.std(x_train)))
 
+
+
+
+
 _ = plt.hist(x_train.flatten(), bins='auto')
 plt.title("Histogram of Training")
 plt.show()
@@ -464,9 +477,10 @@ plt.show()
 from sklearn.utils import shuffle
 
 x_train, y_train = shuffle(x_train, y_train, random_state=0)
+print(x_train[0])
 x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(x_train, y_train, test_size=0.1)
-
-
+np.save('brain_tran',x_train)
+np.save('brain_test',x_test)
 #############################################
 
 
@@ -477,10 +491,11 @@ model = Sequential()
 model.add(tf.keras.layers.Flatten(input_shape=(x_train[0].size,)))
 model.add(tf.keras.layers.Dense(512, activation='relu',name='encoder1'))
 model.add(tf.keras.layers.Dense(256, activation='relu'))
+
 #model.add(tf.keras.layers.Conv1D(filters=num_smaples, kernel_size=3, activation='relu', input_shape=(len, 6)))
 model.add(tf.keras.layers.Dense(128, activation='relu'))
 #model.add(tf.keras.layers.Dense(128, activation='relu'))
-#model.add(tf.keras.layers.Dropout(0.2))
+
 #model.add(tf.keras.layers.Dense(64, activation='relu'))
 model.add(tf.keras.layers.Dense(64, activation='relu'))
 model.add(tf.keras.layers.Dense(32, activation='relu'))
@@ -558,7 +573,9 @@ print('latent_mean')
 print(np.mean(latents))
 print('latent_std')
 print(np.std(latents))
-
+print(regr.coef_)
+plt.bar(range(16),regr.coef_)
+plt.show()
 
 #print("Coefficients: \n", regr.coef_)
 # The mean squared error

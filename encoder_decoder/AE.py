@@ -471,6 +471,7 @@ plt.show()
 from sklearn.utils import shuffle
 
 x_train, y_train = shuffle(x_train, y_train, random_state=0)
+
 x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(x_train, y_train, test_size=0.1)
 
 
@@ -566,7 +567,13 @@ print(np.mean(latents))
 print('latent_std')
 print(np.std(latents))
 
+print(regr.coef_)
+plt.plot(regr.coef_)
+plt.show()
 
+print(regr.coef_)
+plt.bar(range(16),regr.coef_)
+plt.show()
 #print("Coefficients: \n", regr.coef_)
 # The mean squared error
 print("Mean squared error--：Latent: %.2f" % mean_squared_error(y_test, y_pred))
