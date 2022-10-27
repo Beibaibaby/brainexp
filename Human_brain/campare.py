@@ -121,6 +121,16 @@ gt=np.asarray([
     1.6,
     0
 ])
+
+
+
+def NormalizeData(data):
+    return (data - np.min(data)) / (np.max(data) - np.min(data))
+
+pss=np.asarray([0.9,1.5,1.9,1.6,1.5,0.8,2.5,1.4,1.1,2,0.3,0.5,0.9,0.7,2.5,1.7,0.6,1.1,1.9,    2.5,2.5,2.5])
+pss=NormalizeData(pss)
+
+gt=NormalizeData(pss)
 mean=np.mean(gt)
 
 std=np.std(gt)
@@ -133,5 +143,3 @@ random_result=np.random.normal(mean,std,np.size(gt) )
 mse=mean_squared_error(random_result,gt)
 print(mse)
 
-import random
-print(random.uniform(0,1))
