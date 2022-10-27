@@ -486,8 +486,9 @@ print('Train...')
 print(y_train)
 model.fit(x_train, y_train,
           batch_size=batch_size,
-          epochs=250)
+          epochs=1)
 score, acc = model.evaluate(x_test, y_test,
                             batch_size=batch_size)
+model.save("my_model")
 print('Test score:', score)
 print('Test accuracy:', acc)

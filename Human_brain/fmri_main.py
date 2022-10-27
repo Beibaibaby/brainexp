@@ -31,7 +31,7 @@ def getFilterData(rawData):
 
 
 def getHF(rawData):
-    working_data, measures = hp.process_segmentwise(rawData, fs, segment_width=30, calc_freq=True, segment_overlap=0)
+    working_data, measures = hp.process_segmentwise(rawData, fs, segment_width=45, calc_freq=True, segment_overlap=0)
     lnHF_HRV = np.log(measures['hf'])
     rmssd=np.log(measures['rmssd'])
     return lnHF_HRV, rmssd
@@ -51,6 +51,7 @@ def extract_average_series(ts,sliding_window_size):
     last_mean=np.mean(last_element,-1)
     mean_series = np.mean(seriesofts,-1)
 
+
     return np.concatenate((mean_series, np.expand_dims(last_mean, axis=0)), axis=0)
 
 def builddatset(path):
@@ -63,7 +64,8 @@ def builddatset(path):
             mri_file = os.path.join(tem_path,'final.feat','filtered_func_data.nii.gz')
             img = nib.load(mri_file)
             img_data = img.get_fdata()
-            fmri_feature = extract_average_series(img_data, 30)
+            print(img_data.shape)
+            fmri_feature = extract_average_series(img_data, 45)
             print(d+' fmri data extracted successfully')
             print('check the size')
             print(fmri_feature.shape)
@@ -78,12 +80,18 @@ def builddatset(path):
                         print(d + ' ecg feature extracted successfully')
                         print('check the data')
                         ecg_feature=rmssd[:fmri_feature.shape[0]]
-                        print(ecg_feature)
+
 
 
 
             all_subject_fmri_features.append(fmri_feature)
+            for i in range(ecg_feature.size):
+                if np.isnan(ecg_feature[i]):
+                    ecg_feature[i]=(ecg_feature[i-1]+ecg_feature[i+1])/2
+            #print()
+            print(ecg_feature)
             all_subject_ecg_features.append(ecg_feature)
+
 
         else:
             print('no_pre_fmri'+d)
@@ -92,7 +100,36 @@ def builddatset(path):
     return all_subject_fmri_features, all_subject_ecg_features
 
 
+
+def builddatset_nonav(path):
+    d_list = listdirs(path)
+    all_subject_fmri_features=[]
+    for d in d_list:
+        tem_path = os.path.join(path, d)
+        if os.path.exists(os.path.join(tem_path,'final.feat','filtered_func_data.nii.gz')):
+            mri_file = os.path.join(tem_path,'final.feat','filtered_func_data.nii.gz')
+            img = nib.load(mri_file)
+            img_data = img.get_fdata()
+            print(img_data.shape)
+            fmri_feature = img_data
+            print(d+' fmri data extracted successfully')
+            print('check the size')
+            print(fmri_feature.shape)
+
+
+            all_subject_fmri_features.append(fmri_feature)
+
+
+
+        else:
+            print('no_pre_fmri'+d)
+    all_subject_fmri_features=np.asarray(all_subject_fmri_features)
+    return all_subject_fmri_features
+
 if __name__ == "__main__":
+    #nonav_fmri_features=builddatset_nonav(fmripath)
+    #print(nonav_fmri_features)
+    #np.save('nonav_fmri_features', nonav_fmri_features)
     all_subject_fmri_features, all_subject_ecg_features =builddatset(fmripath)
     print(all_subject_fmri_features.shape)
     print(all_subject_ecg_features.shape)
